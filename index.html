@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insta Clone Feed</title>
+    <!-- Load Tailwind CSS from CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Custom Configuration for Inter font and Dark Mode -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'insta-dark': '#000000',
+                        'insta-light-text': '#f5f5f5',
+                        'insta-gray': '#262626',
+                        'insta-border': '#363636',
+                        'insta-blue': '#0095f6',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <!-- Load Inter font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <style>
+        /* Custom scrollbar for a cleaner dark mode look */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #4a4a4a;
+            border-radius: 20px;
+            border: 2px solid #1e1e1e;
+        }
+
+        /* SVG Icons - for simplicity and single-file mandate */
+        .icon {
+            width: 24px;
+            height: 24px;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke: currentColor;
+        }
+
+        .story-ring {
+            background-image: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+            padding: 2px;
+            border-radius: 9999px;
+            display: inline-block;
+        }
+
+        .story-img-wrapper {
+            background-color: #000;
+            border-radius: 9999px;
+            padding: 2px;
+        }
+    </style>
+</head>
+<body class="bg-insta-dark text-insta-light-text font-sans custom-scrollbar overflow-y-scroll">
+
+    <!-- Main Grid Container -->
+    <div class="flex">
+        <!-- 1. Left Sidebar (Fixed Navigation) -->
+        <!-- UPDATED: Changed from lg:flex to md:flex for earlier visibility -->
+        <nav id="left-sidebar"
+            class="hidden md:flex flex-col w-20 xl:w-60 min-h-screen border-r border-insta-border fixed top-0 left-0 bg-insta-dark p-4 z-20">
+            
+            <!-- Logo/Title -->
+            <div class="h-20 flex items-center justify-center xl:justify-start xl:px-4">
+                <h1 class="text-2xl font-semibold xl:block hidden">Instagram</h1>
+                <span class="xl:hidden block text-2xl">📸</span>
+            </div>
+
+            <!-- Navigation Links -->
+            <ul class="space-y-4 pt-4 flex-grow">
+                <!-- Helper function to generate an icon and link -->
+                <script>
+                    function navLink(iconPath, text, isActive) {
+                        const activeClass = isActive ? 'font-bold bg-insta-gray/20' : 'font-normal hover:bg-insta-gray/10';
+                        const iconHtml = `<svg class="icon mr-0 xl:mr-3 ${isActive ? 'fill-white stroke-white' : ''}" viewBox="0 0 24 24">${iconPath}</svg>`;
+                        
+                        return `
+                            <li class="rounded-lg p-3 transition-colors duration-200 cursor-pointer ${activeClass}">
+                                <a href="#" class="flex items-center">
+                                    ${iconHtml}
+                                    <span class="hidden xl:block">${text}</span>
+                                </a>
+                            </li>
+                        `;
+                    }
+
+                    const navItems = [
+                        { icon: '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>', text: 'Home', active: true },
+                        { icon: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>', text: 'Search', active: false },
+                        { icon: '<path d="M20.9 10.1C20.6 8.3 19.3 6.6 17.5 5.9 15.7 5.2 13.9 5.5 12 6c-1.9-.5-3.7-.8-5.5-.1C4.7 6.6 3.4 8.3 3.1 10.1c-.5 1.7-.2 3.5 0 5.2.2 1.7 1.5 3.4 3.3 4.1 1.7.7 3.5.4 5.4 0 1.9.4 3.7.7 5.5 0 1.8-.7 3.1-2.4 3.3-4.1.2-1.7.5-3.5 0-5.2z"/>', text: 'Explore', active: false },
+                        { icon: '<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>', text: 'Reels', active: false },
+                        { icon: '<path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>', text: 'Messages', active: false },
+                        { icon: '<path d="M18 10c0-1.8-1-3.6-2.5-4.8L14 4V2h-4v2l-1.5 1.2C6 6.4 5 8.2 5 10c0 2.2-1.8 4-4 4h22c-2.2 0-4-1.8-4-4z"/>', text: 'Notifications', active: false },
+                        { icon: '<path d="M12 20v-8m0-8v8m-8 0h16a2 2 0 0 1-2 2h-12a2 2 0 0 1-2-2z"/>', text: 'Create', active: false },
+                        
+                    ];
+
+                    const navList = document.getElementById('nav-list');
+                    if(navList) {
+                        navList.innerHTML = navItems.map(item => navLink(item.icon, item.text, item.active)).join('');
+                    }
+                </script>
+
+                <div id="nav-list">
+                    <!-- Links populated by the script above -->
+                </div>
+            </ul>
+            
+            <!-- More Button (at the bottom) -->
+            <div class="pt-6">
+                 <div class="rounded-lg p-3 transition-colors duration-200 cursor-pointer hover:bg-insta-gray/10">
+                    <a href="#" class="flex items-center">
+                        <svg class="icon mr-0 xl:mr-3" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                        <span class="hidden xl:block">More</span>
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Spacer for the fixed sidebar on large screens -->
+        <!-- UPDATED: Changed from lg:block to md:block -->
+        <div class="hidden md:block w-20 xl:w-60"></div>
+
+        <!-- 2. Main Content Area (Feed) -->
+        <main class="flex-grow min-h-screen flex justify-center py-6 px-4 sm:px-6 lg:px-0">
+            <div class="w-full max-w-xl xl:max-w-3xl flex flex-col items-center">
+
+                <!-- Story Bar (Visible on all screen sizes) -->
+                <section class="w-full bg-insta-dark py-4 border-b border-insta-border mb-4 overflow-x-auto whitespace-nowrap custom-scrollbar">
+                    <div class="inline-flex space-x-4">
+                        <!-- Story Item Loop -->
+                        <div class="text-center w-20 flex-shrink-0">
+                            <div class="story-ring">
+                                <div class="story-img-wrapper">
+                                    <img src="https://placehold.co/60x60/dc2743/ffffff?text=ME" alt="Your Story"
+                                        class="w-14 h-14 rounded-full object-cover border-2 border-insta-dark">
+                                </div>
+                            </div>
+                            <p class="text-xs mt-1 truncate">Your Story</p>
+                        </div>
+                        <script>
+                            const stories = ['Ayrton', 'NASA', 'Nature', 'Travel', 'Food', 'Tech', 'Music', 'Design'];
+                            const storyContainer = document.querySelector('.inline-flex');
+                            stories.forEach((name, index) => {
+                                const storyHtml = `
+                                    <div class="text-center w-20 flex-shrink-0">
+                                        <div class="story-ring">
+                                            <div class="story-img-wrapper">
+                                                <img src="https://placehold.co/60x60/262626/ffffff?text=${name.substring(0, 3).toUpperCase()}" alt="${name} Story"
+                                                    class="w-14 h-14 rounded-full object-cover border-2 border-insta-dark">
+                                            </div>
+                                        </div>
+                                        <p class="text-xs mt-1 truncate">${name}</p>
+                                    </div>
+                                `;
+                                storyContainer.innerHTML += storyHtml;
+                            });
+                        </script>
+                        <!-- End Story Item Loop -->
+                    </div>
+                </section>
+
+                <!-- Post Component -->
+                <div class="w-full max-w-lg mb-10">
+                    <article class="bg-insta-dark rounded-lg">
+                        <!-- Post Header -->
+                        <header class="flex items-center justify-between p-3">
+                            <div class="flex items-center">
+                                <img src="https://placehold.co/32x32/1abc9c/ffffff?text=LH" alt="Profile Picture" class="w-8 h-8 rounded-full mr-3 border-2 border-insta-gray">
+                                <span class="font-semibold text-sm">lewishamilton</span>
+                            </div>
+                            <button aria-label="More options" class="text-white/80 hover:text-white transition-colors">
+                                <svg class="icon w-5 h-5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                            </button>
+                        </header>
+
+                        <!-- Post Image (Main content) -->
+                        <div class="w-full bg-insta-gray aspect-square">
+                            <img src="https://placehold.co/600x600/e74c3c/ffffff?text=Ayrton+Post" alt="Ayrton Senna tribute post" class="w-full h-full object-cover">
+                        </div>
+
+                        <!-- Post Actions -->
+                        <section class="p-3">
+                            <div class="flex justify-between items-center mb-2">
+                                <div class="flex space-x-3">
+                                    <button aria-label="Like post" class="text-white hover:opacity-70 transition-opacity">
+                                        <svg class="icon hover:fill-red-600 hover:stroke-red-600 transition-all" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                    </button>
+                                    <button aria-label="Comment on post" class="text-white hover:opacity-70 transition-opacity">
+                                        <svg class="icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                    </button>
+                                    <button aria-label="Share post" class="text-white hover:opacity-70 transition-opacity">
+                                        <svg class="icon" viewBox="0 0 24 24"><path d="M4 12l17-7-5 17-7-5 10-10"/></svg>
+                                    </button>
+                                </div>
+                                <button aria-label="Save post" class="text-white hover:opacity-70 transition-opacity">
+                                    <svg class="icon" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                                </button>
+                            </div>
+
+                            <!-- Likes Count -->
+                            <p class="text-sm font-semibold mb-2">32,345 likes</p>
+
+                            <!-- Caption -->
+                            <p class="text-sm mb-1">
+                                <span class="font-semibold mr-1">lewishamilton</span>
+                                Sempre Ayrton, minha inspiração sempre ali...
+                            </p>
+
+                            <!-- View Comments -->
+                            <p class="text-sm text-gray-500 cursor-pointer mb-2">View all 1,200 comments</p>
+
+                            <!-- Time Stamp -->
+                            <p class="text-xs text-gray-500 uppercase">1 DAY AGO</p>
+                        </section>
+
+                        <!-- Add Comment Input -->
+                        <div class="p-3 border-t border-insta-border">
+                            <div class="flex items-center">
+                                <input type="text" placeholder="Add a comment..." class="w-full bg-transparent text-sm focus:outline-none placeholder-gray-500" aria-label="Comment input">
+                                <button class="text-insta-blue text-sm font-semibold ml-3 opacity-50 hover:opacity-100 transition-opacity" disabled>Post</button>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+                <!-- End Post Component 1 -->
+
+
+                 <!-- Post Component 2 -->
+                 <div class="w-full max-w-lg mb-10">
+                    <article class="bg-insta-dark rounded-lg">
+                        <!-- Post Header -->
+                        <header class="flex items-center justify-between p-3">
+                            <div class="flex items-center">
+                                <img src="https://placehold.co/32x32/3498db/ffffff?text=ST" alt="Profile Picture" class="w-8 h-8 rounded-full mr-3 border-2 border-insta-gray">
+                                <span class="font-semibold text-sm">string_theory_org</span>
+                            </div>
+                            <button aria-label="More options" class="text-white/80 hover:text-white transition-colors">
+                                <svg class="icon w-5 h-5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                            </button>
+                        </header>
+
+                        <!-- Post Image (Main content) -->
+                        <div class="w-full bg-insta-gray aspect-square">
+                            <img src="https://placehold.co/600x600/3498db/ffffff?text=STRING+THEORY+IS+REJECTED" alt="String Theory post" class="w-full h-full object-cover">
+                        </div>
+
+                        <!-- Post Actions -->
+                        <section class="p-3">
+                            <div class="flex justify-between items-center mb-2">
+                                <div class="flex space-x-3">
+                                    <button aria-label="Like post" class="text-white hover:opacity-70 transition-opacity">
+                                        <svg class="icon hover:fill-red-600 hover:stroke-red-600 transition-all" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                    </button>
+                                    <button aria-label="Comment on post" class="text-white hover:opacity-70 transition-opacity">
+                                        <svg class="icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                    </button>
+                                    <button aria-label="Share post" class="text-white hover:opacity-70 transition-opacity">
+                                        <svg class="icon" viewBox="0 0 24 24"><path d="M4 12l17-7-5 17-7-5 10-10"/></svg>
+                                    </button>
+                                </div>
+                                <button aria-label="Save post" class="text-white hover:opacity-70 transition-opacity">
+                                    <svg class="icon" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                                </button>
+                            </div>
+
+                            <!-- Likes Count -->
+                            <p class="text-sm font-semibold mb-2">4,704 likes</p>
+
+                            <!-- Caption -->
+                            <p class="text-sm mb-1">
+                                <span class="font-semibold mr-1">string_theory_org</span>
+                                For many years we refused to YouTube but we created different versions of the Goal Theorem...
+                            </p>
+
+                            <!-- View Comments -->
+                            <p class="text-sm text-gray-500 cursor-pointer mb-2">View all 1,200 comments</p>
+
+                            <!-- Time Stamp -->
+                            <p class="text-xs text-gray-500 uppercase">2 DAYS AGO</p>
+                        </section>
+
+                        <!-- Add Comment Input -->
+                        <div class="p-3 border-t border-insta-border">
+                            <div class="flex items-center">
+                                <input type="text" placeholder="Add a comment..." class="w-full bg-transparent text-sm focus:outline-none placeholder-gray-500" aria-label="Comment input">
+                                <button class="text-insta-blue text-sm font-semibold ml-3 opacity-50 hover:opacity-100 transition-opacity" disabled>Post</button>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+                <!-- End Post Component 2 -->
+                
+                <!-- Suggestions Section (Interspersed in feed on small screens) -->
+                <section class="w-full max-w-lg mb-10 block lg:hidden">
+                    <h2 class="text-sm font-semibold text-gray-500 mb-3">Suggested For You</h2>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <img src="https://placehold.co/40x40/3498db/ffffff?text=KC" alt="Profile Picture" class="w-10 h-10 rounded-full mr-3 border-2 border-insta-gray">
+                                <div>
+                                    <p class="text-sm font-semibold">katygeorge</p>
+                                    <p class="text-xs text-gray-500">Suggested for you</p>
+                                </div>
+                            </div>
+                            <button class="text-insta-blue text-xs font-semibold hover:text-white transition-colors">Follow</button>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <img src="https://placehold.co/40x40/f39c12/ffffff?text=DN" alt="Profile Picture" class="w-10 h-10 rounded-full mr-3 border-2 border-insta-gray">
+                                <div>
+                                    <p class="text-sm font-semibold">durgeshnandini</p>
+                                    <p class="text-xs text-gray-500">Followed by a friend</p>
+                                </div>
+                            </div>
+                            <button class="text-insta-blue text-xs font-semibold hover:text-white transition-colors">Follow</button>
+                        </div>
+                    </div>
+                </section>
+                <!-- End Suggestions Section -->
+
+
+                <!-- Post Component 3 -->
+                <div class="w-full max-w-lg mb-10">
+                    <article class="bg-insta-dark rounded-lg">
+                        <!-- Post Header -->
+                        <header class="flex items-center justify-between p-3">
+                            <div class="flex items-center">
+                                <img src="https://placehold.co/32x32/16a085/ffffff?text=W" alt="Profile Picture" class="w-8 h-8 rounded-full mr-3 border-2 border-insta-gray">
+                                <span class="font-semibold text-sm">discoverytv</span>
+                            </div>
+                            <button aria-label="More options" class="text-white/80 hover:text-white transition-colors">
+                                <svg class="icon w-5 h-5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                            </button>
+                        </header>
+
+                        <!-- Post Image (Main content) -->
+                        <div class="w-full bg-insta-gray aspect-square">
+                            <img src="https://placehold.co/600x600/16a085/ffffff?text=Falcon+Post" alt="Falcon flying post" class="w-full h-full object-cover">
+                        </div>
+
+                        <!-- Post Actions -->
+                        <section class="p-3">
+                            <div class="flex justify-between items-center mb-2">
+                                <div class="flex space-x-3">
+                                    <button aria-label="Like post" class="text-white hover:opacity-70 transition-opacity">
+                                        <svg class="icon hover:fill-red-600 hover:stroke-red-600 transition-all" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                    </button>
+                                    <button aria-label="Comment on post" class="text-white hover:opacity-70 transition-opacity">
+                                        <svg class="icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                    </button>
+                                    <button aria-label="Share post" class="text-white hover:opacity-70 transition-opacity">
+                                        <svg class="icon" viewBox="0 0 24 24"><path d="M4 12l17-7-5 17-7-5 10-10"/></svg>
+                                    </button>
+                                </div>
+                                <button aria-label="Save post" class="text-white hover:opacity-70 transition-opacity">
+                                    <svg class="icon" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                                </button>
+                            </div>
+
+                            <!-- Likes Count -->
+                            <p class="text-sm font-semibold mb-2">1.1K likes</p>
+
+                            <!-- Caption -->
+                            <p class="text-sm mb-1">
+                                <span class="font-semibold mr-1">discoverytv</span>
+                                Truly majestic!
+                            </p>
+
+                            <!-- View Comments -->
+                            <p class="text-sm text-gray-500 cursor-pointer mb-2">View all 1,200 comments</p>
+
+                            <!-- Time Stamp -->
+                            <p class="text-xs text-gray-500 uppercase">3 DAYS AGO</p>
+                        </section>
+
+                        <!-- Add Comment Input -->
+                        <div class="p-3 border-t border-insta-border">
+                            <div class="flex items-center">
+                                <input type="text" placeholder="Add a comment..." class="w-full bg-transparent text-sm focus:outline-none placeholder-gray-500" aria-label="Comment input">
+                                <button class="text-insta-blue text-sm font-semibold ml-3 opacity-50 hover:opacity-100 transition-opacity" disabled>Post</button>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+                <!-- End Post Component 3 -->
+
+
+            </div>
+        </main>
+
+        <!-- 3. Right Sidebar (Suggestions) -->
+        <!-- UPDATED: Changed from lg:block to md:block for earlier visibility -->
+        <aside id="right-sidebar"
+            class="hidden md:block w-72 min-h-screen pt-14 xl:pt-20 xl:mr-24 sticky top-0">
+            <div class="fixed w-72">
+                <!-- User Profile Summary -->
+                <div class="flex items-center justify-between mb-5">
+                    <div class="flex items-center">
+                        <img src="https://placehold.co/56x56/9b59b6/ffffff?text=YOU" alt="Your Profile Picture" class="w-14 h-14 rounded-full mr-3 border-2 border-insta-gray">
+                        <div>
+                            <p class="text-sm font-semibold">my_username_123</p>
+                            <p class="text-sm text-gray-500">My Full Name</p>
+                        </div>
+                    </div>
+                    <button class="text-insta-blue text-xs font-semibold hover:text-white transition-colors">Switch</button>
+                </div>
+
+                <!-- Suggestions Header -->
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-sm font-semibold text-gray-500">Suggestions For You</h2>
+                    <a href="#" class="text-xs font-semibold text-insta-light-text hover:text-white transition-colors">See All</a>
+                </div>
+
+                <!-- Suggestions List -->
+                <div class="space-y-4" id="desktop-suggestions">
+                    <!-- Suggestion Item Loop -->
+                    <script>
+                        const suggestions = [
+                            { username: 'katygeorge', name: 'Katy George', status: 'Suggested for you', code: 'KG' },
+                            { username: 'durgeshnandini', name: 'Durg Nandini', status: 'Followed by r_user', code: 'DN' },
+                            { username: 'sainapvt', name: 'Saina Vlogs', status: 'Suggested for you', code: 'SV' },
+                            { username: 'baboli', name: 'Baboli Records', status: 'Suggested for you', code: 'BR' },
+                        ];
+                        // FIXED: Targeting the correct container using its ID
+                        const suggestionContainer = document.getElementById('desktop-suggestions');
+                        if (suggestionContainer) {
+                            suggestions.forEach((item, index) => {
+                                const suggestionHtml = `
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            <img src="https://placehold.co/40x40/2ecc71/ffffff?text=${item.code}" alt="${item.username} profile" class="w-10 h-10 rounded-full mr-3 border-2 border-insta-gray">
+                                            <div>
+                                                <p class="text-sm font-semibold">${item.username}</p>
+                                                <p class="text-xs text-gray-500">${item.status}</p>
+                                            </div>
+                                        </div>
+                                        <button class="text-insta-blue text-xs font-semibold hover:text-white transition-colors">Follow</button>
+                                    </div>
+                                `;
+                                suggestionContainer.innerHTML += suggestionHtml;
+                            });
+                        }
+                    </script>
+                    <!-- End Suggestion Item Loop -->
+                </div>
+                
+                <!-- Footer/Links -->
+                <footer class="mt-8 text-xs text-gray-600 space-y-2">
+                    <p>About · Help · Press · API · Jobs · Privacy · Terms · Locations · Language</p>
+                    <p>© 2024 INSTACLONE BY GEMINI</p>
+                </footer>
+            </div>
+        </aside>
+
+    </div>
+
+    <!-- Mobile Bottom Navigation (Hidden on large screens) -->
+    <nav class="lg:hidden fixed bottom-0 left-0 w-full h-14 bg-insta-dark border-t border-insta-border z-30">
+        <div class="flex justify-around items-center h-full">
+            <svg class="icon w-6 h-6 fill-white stroke-white" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <svg class="icon w-6 h-6" viewBox="0 0 24 24"><path d="M20.9 10.1C20.6 8.3 19.3 6.6 17.5 5.9C15.7 5.2 13.9 5.5 12 6c-1.9-.5-3.7-.8-5.5-.1C4.7 6.6 3.4 8.3 3.1 10.1c-.5 1.7-.2 3.5 0 5.2.2 1.7 1.5 3.4 3.3 4.1 1.7.7 3.5.4 5.4 0 1.9.4 3.7.7 5.5 0 1.8-.7 3.1-2.4 3.3-4.1.2-1.7.5-3.5 0-5.2z"/></svg>
+            <svg class="icon w-6 h-6" viewBox="0 0 24 24"><path d="M12 20v-8m0-8v8m-8 0h16a2 2 0 0 1-2 2h-12a2 2 0 0 1-2-2z"/></svg>
+            <svg class="icon w-6 h-6" viewBox="0 0 24 24"><path d="M18 10c0-1.8-1-3.6-2.5-4.8L14 4V2h-4v2l-1.5 1.2C6 6.4 5 8.2 5 10c0 2.2-1.8 4-4 4h22c-2.2 0-4-1.8-4-4z"/></svg>
+            <img src="https://placehold.co/28x28/9b59b6/ffffff?text=Y" alt="Your Profile Picture" class="w-7 h-7 rounded-full border border-white">
+        </div>
+    </nav>
+</body>
+</html>
